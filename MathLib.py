@@ -144,3 +144,21 @@ def dot(v1, v2):
 
 def interpolate(valA, valB, valC, u, v, w):
     return u * valA + v * valB + w * valC
+
+def reflect_vector(I, N):
+    dot_product = sum(i * n for i, n in zip(I, N))
+    reflected = [i - 2 * dot_product * n for i, n in zip(I, N)]
+    norm = (sum(comp ** 2 for comp in reflected)) ** 0.5
+    return [comp / norm for comp in reflected]
+
+
+def restar_elementos(v1, v2):
+    if len(v1) != len(v2):
+        raise ValueError("Las listas deben tener la misma longitud.")
+    return [a - b for a, b in zip(v1, v2)]
+
+
+def suma_vectores(v1, v2):
+    if len(v1) != len(v2):
+        raise ValueError("Las listas deben tener la misma longitud.")
+    return [a + b for a, b in zip(v1, v2)]
