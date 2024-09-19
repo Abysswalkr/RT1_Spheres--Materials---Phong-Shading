@@ -2,7 +2,7 @@
 
 **Snowman Raytracer** es un proyecto de trazado de rayos desarrollado en Python que renderiza un muñeco de nieve 3D utilizando Pygame. El proyecto implementa un motor de trazado de rayos (Ray Tracing) básico, que calcula la intersección de rayos con objetos geométricos para generar una escena con iluminación, materiales y sombras.
 
-![Muñeco de nieve renderizado](SnowMan.png)
+[](SnowMan.png)
 
 ## Características
 
