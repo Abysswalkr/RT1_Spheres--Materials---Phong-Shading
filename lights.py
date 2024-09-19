@@ -1,38 +1,49 @@
 from MathLib import *
 
-class Luz:
-    def __init__(self, intensidad=1.0, color=[1.0, 1.0, 1.0]):
-        self.intensidad = intensidad
-        self.color = color
+class Illumination(object):
+    def __init__(self, lightColor=[1, 1, 1], brightness=1.0, lightCategory="None"):
+        self.lightColor = lightColor
+        self.brightness = brightness
+        self.lightCategory = lightCategory
 
+    def calculateLightIntensity(self, hitPoint=None):
+        return [(c * self.brightness) for c in self.lightColor]
 
-class LuzDireccional(Luz):
-    def __init__(self, direccion=[0, -1, 0], intensidad=1.0, color=[1.0, 1.0, 1.0]):
-        super().__init__(intensidad, color)
-        self.direccion = normalize_vector(direccion)
+    def calculateSpecularHighlight(self, hitPoint, observerPosition):
+        return [0, 0, 0]
 
-    def calcular_iluminacion(self, punto, normal):
-        iluminacion = max(dot(self.direccion, normal), 0) * self.intensidad
-        return [iluminacion * c for c in self.color]
+class BackgroundLight(Illumination):
+    def __init__(self, lightColor=[1, 1, 1], brightness=1.0):
+        super().__init__(lightColor, brightness, "Ambient")
 
+class Sunlight(Illumination):
+    def __init__(self, lightColor=[1, 1, 1], brightness=1.0, directionVector=[0, -1, 0]):
+        super().__init__(lightColor, brightness, "Directional")
+        self.directionVector = normalize_vector(directionVector)
 
-class LuzPuntual(Luz):
-    def __init__(self, posicion=[0, 0, 0], intensidad=1.0, color=[1.0, 1.0, 1.0]):
-        super().__init__(intensidad, color)
-        self.posicion = posicion
+    def calculateLightIntensity(self, hitPoint=None):
+        baseLightColor = super().calculateLightIntensity()
+        if hitPoint:
+            inverseDirection = [(-d) for d in self.directionVector]
+            lightStrength = dot(hitPoint.normal, inverseDirection)
+            lightStrength = max(0, min(1, lightStrength))
+            lightStrength *= (1 - hitPoint.obj.propiedadesMaterial.reflectivity)  # Cambiado 'material' a 'propiedadesMaterial'
+            baseLightColor = [(c * lightStrength) for c in baseLightColor]
+        return baseLightColor
 
-    def calcular_iluminacion(self, punto, normal):
-        direccion_luz = restar_elementos(self.posicion, punto)
-        direccion_luz = normalize_vector(direccion_luz)
+    def calculateSpecularHighlight(self, hitPoint, observerPosition):
+        specularHighlight = self.lightColor
 
-        iluminacion = max(dot(direccion_luz, normal), 0) * self.intensidad
-        return [iluminacion * c for c in self.color]
+        if hitPoint:
+            inverseDirection = [(-d) for d in self.directionVector]
+            reflectedRay = calcularReflejo(hitPoint.normal, inverseDirection)
 
+            viewDirection = restar_elementos(observerPosition, hitPoint.point)
+            viewDirection = normalize_vector(viewDirection)
 
-class LuzAmbiente(Luz):
-    def __init__(self, intensidad=0.2, color=[1.0, 1.0, 1.0]):
-        super().__init__(intensidad, color)
+            specularFactor = max(0, dot(viewDirection, reflectedRay) ** hitPoint.obj.propiedadesMaterial.shininess)  # Cambiado 'material' a 'propiedadesMaterial'
+            specularFactor *= hitPoint.obj.propiedadesMaterial.reflectivity
+            specularFactor *= self.brightness
+            specularHighlight = [(c * specularFactor) for c in specularHighlight]
 
-    def calcular_iluminacion(self):
-        return [self.intensidad * c for c in self.color]
-
+        return specularHighlight

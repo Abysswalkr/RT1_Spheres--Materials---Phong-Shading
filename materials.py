@@ -1,15 +1,26 @@
-class Material:
-    def __init__(self, color=[1.0, 1.0, 1.0], difuso=1.0, especular=0.5, reflectividad=0.5):
-        self.color = color
-        self.difuso = difuso
-        self.especular = especular
-        self.reflectividad = reflectividad
+class SurfaceProperties(object):
+    def __init__(self, baseColor, shininess=1.0, reflectivity=0.0):
+        self.baseColor = baseColor
+        self.shininess = shininess
+        self.reflectivity = reflectivity
 
-    def calcular_luz_difusa(self, intensidad_luz, angulo):
-        return [self.color[i] * intensidad_luz * self.difuso * max(0, angulo) for i in range(3)]
+    def computeColor(self, intersection, scene):
 
-    def calcular_luz_especular(self, intensidad_luz, angulo, brillo=32):
-        return [intensidad_luz * self.especular * (max(0, angulo) ** brillo) for i in range(3)]
+        totalLight = [0, 0, 0]
+        surfaceColor = self.baseColor
 
-    def calcular_reflejo(self, color_reflejado, nivel_reflejo):
-        return [self.color[i] * (1 - self.reflectividad) + color_reflejado[i] * self.reflectividad for i in range(3)]
+        for illumination in scene.lights:
+            occlusion = None
+
+            if illumination.lightCategory == "Directional":
+                directionToLight = [-d for d in illumination.directionVector]
+                occlusion = scene.lanzarRayo(intersection.point, directionToLight, intersection.obj)
+
+            if occlusion is None:
+                directLightColor = illumination.calculateLightIntensity(intersection)
+                highlightColor = illumination.calculateSpecularHighlight(intersection, scene.camera.translate)
+                totalLight = [(totalLight[i] + directLightColor[i] + highlightColor[i]) for i in range(3)]
+
+        surfaceColor = [(surfaceColor[i] * totalLight[i]) for i in range(3)]
+        surfaceColor = [min(1, surfaceColor[i]) for i in range(3)]
+        return surfaceColor

@@ -1,4 +1,4 @@
-from math import pi, sin, cos, isclose
+from math import pi, sin, cos, isclose, sqrt
 
 
 def barycentricCoords(A, B, C, P):
@@ -145,16 +145,23 @@ def dot(v1, v2):
 def interpolate(valA, valB, valC, u, v, w):
     return u * valA + v * valB + w * valC
 
-def reflect_vector(I, N):
-    dot_product = sum(i * n for i, n in zip(I, N))
-    reflected = [i - 2 * dot_product * n for i, n in zip(I, N)]
-    norm = (sum(comp ** 2 for comp in reflected)) ** 0.5
-    return [comp / norm for comp in reflected]
+
+def calcularReflejo(normalVector, incomingDirection):
+    # R = 2 * (N . L) * N - L
+    productoPunto = dot(normalVector, incomingDirection)
+    normalEscalada = [2 * productoPunto * componente for componente in normalVector]  # 2 * (N . L) * N
+    vectorReflejado = restar_elementos(normalEscalada, incomingDirection)  # 2 * (N . L) * N - L
+
+    # Normalizar el vector reflejado
+    magnitud = sqrt(sum([componente ** 2 for componente in vectorReflejado]))
+    vectorReflejadoNormalizado = [componente / magnitud for componente in vectorReflejado]
+
+    return vectorReflejadoNormalizado
 
 
 def restar_elementos(v1, v2):
     if len(v1) != len(v2):
-        raise ValueError("Las listas deben tener la misma longitud.")
+        raise ValueError("Los vectores deben tener la misma longitud")
     return [a - b for a, b in zip(v1, v2)]
 
 

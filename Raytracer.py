@@ -6,8 +6,8 @@ from materials import SurfaceProperties
 from lights import *
 
 # Configuración de pantalla
-width = 256
-height = 256
+width = 540
+height = 540
 
 screen = pygame.display.set_mode((width, height), pygame.SCALED)
 clock = pygame.time.Clock()

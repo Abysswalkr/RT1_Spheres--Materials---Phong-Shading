@@ -1,30 +1,38 @@
 from Interception import Interception
-from MathLib import restar_elementos, dot, suma_vectores, normalize_vector
-from math import sqrt
+from MathLib import *
 
-class Figura:
-    def __init__(self, posicion, material):
-        self.posicion = posicion
-        self.material = material
 
-    def intersectar_rayo(self, origen, direccion):
+class Geometria(object):
+    def __init__(self, centro, propiedadesMaterial):
+        self.centro = centro
+        self.propiedadesMaterial = propiedadesMaterial
+        self.tipoGeometria = "Ninguno"
+
+    def intersectarRayo(self, origen, direccion):
         return None
 
-class Esfera(Figura):
-    def __init__(self, centro, radio, material):
-        super().__init__(centro, material)
+
+class Esfera(Geometria):
+    def __init__(self, centro, radio, propiedadesMaterial):
+        super().__init__(centro, propiedadesMaterial)
         self.radio = radio
+        self.tipoGeometria = "Esfera"
 
-    def intersectar_rayo(self, origen, direccion):
-        L = restar_elementos(self.posicion, origen)
-        tca = dot(L, direccion)
-        magnitud_L2 = dot(L, L)
+    def intersectarRayo(self, origen, direccion):
+        vectorDistancia = restar_elementos(self.centro, origen)
+        tca = dot(vectorDistancia, direccion)
 
-        d2 = magnitud_L2 - tca ** 2
-        if d2 > self.radio ** 2:
+        distanciaNormCuadrada = sum([componente ** 2 for componente in vectorDistancia])  # ||L||^2
+        distanciaProyectadaCuadrada = distanciaNormCuadrada - tca ** 2
+        if distanciaProyectadaCuadrada < 0:
+            return None  # No hay intersección
+
+        distanciaProyectada = sqrt(distanciaProyectadaCuadrada)
+
+        if distanciaProyectada > self.radio:
             return None
 
-        thc = sqrt(self.radio ** 2 - d2)
+        thc = (self.radio ** 2 - distanciaProyectada ** 2) ** 0.5
 
         t0 = tca - thc
         t1 = tca + thc
@@ -34,9 +42,18 @@ class Esfera(Figura):
         if t0 < 0:
             return None
 
-        punto_interseccion = suma_vectores(origen, [direccion[i] * t0 for i in range(len(direccion))])
+        # Punto de intersección = origen + direccion * t0
+        direccionEscalada = [comp * t0 for comp in direccion]  # direccion * t0
+        puntoInterseccion = suma_vectores(origen, direccionEscalada)  # origen + (direccion * t0)
 
-        normal_interseccion = normalize_vector(restar_elementos(punto_interseccion, self.posicion))
+        # vectorNormal = (PuntoIntersección - self.centro).normalize()
+        diferenciaPuntoCentro = restar_elementos(puntoInterseccion, self.centro)
+        vectorNormal = normalize_vector(diferenciaPuntoCentro)
 
-        return Interception(punto_interseccion, normal_interseccion, t0, self)
+        return Interception(
+            point=puntoInterseccion,
+            normal=vectorNormal,
+            distancia=t0,
+            obj=self
+        )
 
